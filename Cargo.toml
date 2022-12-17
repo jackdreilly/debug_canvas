@@ -2,7 +2,11 @@
 name = "debug_canvas"
 version = "0.1.0"
 edition = "2021"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+description = "Easily print complicated debug strings"
+authors = ["Jack Reilly", "Jack Reilly <jackdreilly@gmail.com>"]
+license = "MIT OR Apache-2.0"
+homepage = "https://github.com/jackdreilly/debug_canvas"
+repository = "https://github.com/jackdreilly/debug_canvas"
+documentation = "https://github.com/jackdreilly/debug_canvas"
 
 [dependencies]
