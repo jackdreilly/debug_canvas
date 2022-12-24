@@ -1,6 +1,6 @@
 [package]
 name = "debug_canvas"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 description = "Easily print complicated debug strings"
 authors = ["Jack Reilly", "Jack Reilly <jackdreilly@gmail.com>"]

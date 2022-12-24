@@ -4,20 +4,42 @@ use std::{
     ops::{Index, IndexMut},
 };
 
+#[derive(Default, Debug, Clone, Copy)]
+pub struct Options {
+    pub bottom_oriented: bool,
+    pub filler: char,
+}
+
+#[derive(Debug)]
 pub struct DebugCanvas {
     points: HashMap<(i64, i64), char>,
     min_row: i64,
     max_row: i64,
     min_col: i64,
     max_col: i64,
+    options: Options,
 }
 impl DebugCanvas {
     fn is_empty(&self) -> bool {
         self.points.is_empty()
     }
+    pub fn size(&self) -> (u64, u64) {
+        if self.is_empty() {
+            (0, 0)
+        } else {
+            (
+                (self.max_row - self.min_row + 1) as u64,
+                (self.max_col - self.min_col + 1) as u64,
+            )
+        }
+    }
 
     pub fn new() -> Self {
+        Self::with_options(Options::default())
+    }
+    pub fn with_options(options: Options) -> Self {
         Self {
+            options,
             points: HashMap::new(),
             min_row: i64::MAX,
             max_row: i64::MIN,
@@ -26,12 +48,16 @@ impl DebugCanvas {
         }
     }
 
+    pub fn clear(&mut self) {
+        *self = Self::with_options(self.options);
+    }
+
     pub fn remove(&mut self, (row, col): (i64, i64)) {
         self.points.remove(&(row, col));
-        self.max_col = self.points.keys().map(|&f| f.1).max().unwrap_or_default();
-        self.min_col = self.points.keys().map(|&f| f.1).min().unwrap_or_default();
-        self.max_row = self.points.keys().map(|&f| f.0).max().unwrap_or_default();
-        self.min_row = self.points.keys().map(|&f| f.0).min().unwrap_or_default();
+        self.max_col = self.points.keys().map(|&f| f.1).max().unwrap_or(i64::MIN);
+        self.min_col = self.points.keys().map(|&f| f.1).min().unwrap_or(i64::MAX);
+        self.max_row = self.points.keys().map(|&f| f.0).max().unwrap_or(i64::MIN);
+        self.min_row = self.points.keys().map(|&f| f.0).min().unwrap_or(i64::MAX);
     }
 }
 
@@ -46,28 +72,45 @@ impl Display for DebugCanvas {
         if self.is_empty() {
             return Ok(());
         }
-        for row in (self.min_row..=self.max_row).rev() {
-            for col in self.min_col..=self.max_col {
-                write!(f, "{}", self[(row, col)])?;
-            }
-            if row > self.min_row {
+        let (n, m) = self.size();
+        for i in 0..n {
+            if i > 0 {
                 writeln!(f)?;
             }
+            for j in 0..m {
+                let row = if self.options.bottom_oriented {
+                    self.min_row + i as i64
+                } else {
+                    self.max_row - i as i64
+                };
+                let col = self.min_col + j as i64;
+                write!(f, "{}", self[(row, col)])?;
+            }
         }
+        writeln!(f)?;
         Ok(())
     }
 }
 
-impl Index<(i64, i64)> for DebugCanvas {
+impl<T> Index<(T, T)> for DebugCanvas
+where
+    T: Into<i64>,
+{
     type Output = char;
 
-    fn index(&self, (row, col): (i64, i64)) -> &Self::Output {
-        self.points.get(&(row, col)).unwrap_or(&' ')
+    fn index(&self, (row, col): (T, T)) -> &Self::Output {
+        self.points
+            .get(&(row.into(), col.into()))
+            .unwrap_or(&self.options.filler)
     }
 }
 
-impl IndexMut<(i64, i64)> for DebugCanvas {
-    fn index_mut(&mut self, (row, col): (i64, i64)) -> &mut Self::Output {
+impl<T> IndexMut<(T, T)> for DebugCanvas
+where
+    T: Into<i64>,
+{
+    fn index_mut(&mut self, (row, col): (T, T)) -> &mut Self::Output {
+        let (row, col) = (row.into(), col.into());
         self.max_col = self.max_col.max(col);
         self.min_col = self.min_col.min(col);
         self.max_row = self.max_row.max(row);
